@@ -1,236 +1,160 @@
---[[ Reconnect by fldzxc — safe rejoin (без хука Kick) ]]
--- Твой репо: fallonworkbylove/fldzxc-reconnect
--- Chris12089/atlasbss — только rewrite.lua автора
-local BRAND = "Reconnect by fldzxc"
-local SELF = "https://raw.githubusercontent.com/fallonworkbylove/fldzxc-reconnect/main/reconnect.lua"
-local URL = "https://raw.githubusercontent.com/Chris12089/atlasbss/main/rewrite.lua"
-local INTERVAL = 7200
-local SAVE_WAIT, NET_WAIT, NORMAL_WAIT = 180, 12, 6
-local MAX_TRIES = 5
-
-local genv = (getgenv and getgenv()) or _G
-if genv.__fldzxc_reconnect then return end
-genv.__fldzxc_reconnect = true
-
-local cr = cloneref or function(x) return x end
-local Players = cr(game:GetService("Players"))
-local TS = cr(game:GetService("TeleportService"))
-local GS = cr(game:GetService("GuiService"))
-local Tween = cr(game:GetService("TweenService"))
-local LP, PlaceId = Players.LocalPlayer, game.PlaceId
-local qot = queue_on_teleport or queueonteleport
-local clearQ = clearteleportqueue or clear_teleport_queue or clearqueueonteleport
-local httpReq = request or http_request or (syn and syn.request)
-
-local busy, lastAt, lastMsg = false, 0, ""
-local statusLbl, bar
-
-local C = {
-	panel = Color3.fromRGB(22, 23, 26),
-	line = Color3.fromRGB(58, 52, 42),
-	gold = Color3.fromRGB(232, 196, 120),
-	cream = Color3.fromRGB(244, 238, 226),
-	mute = Color3.fromRGB(148, 142, 132),
-	warn = Color3.fromRGB(232, 168, 96),
-	bad = Color3.fromRGB(220, 108, 98),
-	ok = Color3.fromRGB(160, 210, 150),
-	ink = Color3.fromRGB(12, 13, 15),
+-- Reconnect by fldzxc | protected build (do not rebrand)
+local _rlhakvrBgm={ 102, 108, 100, 122, 120, 99, 45, 114, 101, 99, 111, 110, 110, 101, 99, 116, 45, 118, 49 }
+local _svILrJKWUp={
+	"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",
+	"fyQkL0ZkZ2wKGkcTUhJETXBxBkMWbwYBCkdv"
 }
-
-local function ui(class, props, parent)
-	local o = Instance.new(class)
-	for k, v in pairs(props) do o[k] = v end
-	if parent then o.Parent = parent end
-	return o
-end
-
-local function setStatus(t, tone)
-	print("[fldzxc]", t)
-	if not statusLbl then return end
-	statusLbl.Text = t
-	local c = tone == "ok" and C.ok or tone == "warn" and C.warn or tone == "bad" and C.bad or C.mute
-	statusLbl.TextColor3 = c
-	if bar then bar.BackgroundColor3 = c end
-end
-
--- UI
-pcall(function()
-	local host = (gethui and gethui()) or LP:WaitForChild("PlayerGui")
-	local gui = ui("ScreenGui", { Name = "FldzxcReconnect", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 1e6 }, host)
-
-	local splash = ui("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.ink, BackgroundTransparency = 0.25, BorderSizePixel = 0, ZIndex = 40 }, gui)
-	local card = ui("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(280, 118), BackgroundColor3 = C.panel, BorderSizePixel = 0, ZIndex = 41,
-	}, splash)
-	ui("UICorner", { CornerRadius = UDim.new(0, 12) }, card)
-	ui("UIStroke", { Color = C.line, Thickness = 1, Transparency = 0.15 }, card)
-	ui("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.fromOffset(20, 22), Size = UDim2.new(1, -40, 0, 22),
-		Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = C.cream, TextXAlignment = Enum.TextXAlignment.Left,
-		Text = BRAND, ZIndex = 42,
-	}, card)
-	ui("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.fromOffset(20, 48), Size = UDim2.new(1, -40, 0, 16),
-		Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = C.mute, TextXAlignment = Enum.TextXAlignment.Left,
-		Text = "safe reconnect", ZIndex = 42,
-	}, card)
-	local track = ui("Frame", { Position = UDim2.fromOffset(20, 84), Size = UDim2.new(1, -40, 0, 5), BackgroundColor3 = C.ink, BorderSizePixel = 0, ZIndex = 42 }, card)
-	ui("UICorner", { CornerRadius = UDim.new(1, 0) }, track)
-	local fill = ui("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = C.gold, BorderSizePixel = 0, ZIndex = 43 }, track)
-	ui("UICorner", { CornerRadius = UDim.new(1, 0) }, fill)
-	task.spawn(function()
-		local tw = Tween:Create(fill, TweenInfo.new(0.9, Enum.EasingStyle.Quart), { Size = UDim2.fromScale(1, 1) })
-		tw:Play(); tw.Completed:Wait(); task.wait(0.1)
-		Tween:Create(splash, TweenInfo.new(0.3), { BackgroundTransparency = 1 }):Play()
-		for _, d in ipairs(splash:GetDescendants()) do
-			if d:IsA("TextLabel") then Tween:Create(d, TweenInfo.new(0.25), { TextTransparency = 1 }):Play()
-			elseif d:IsA("Frame") and d ~= splash then Tween:Create(d, TweenInfo.new(0.25), { BackgroundTransparency = 1 }):Play()
-			elseif d:IsA("UIStroke") then Tween:Create(d, TweenInfo.new(0.25), { Transparency = 1 }):Play() end
-		end
-		task.wait(0.35); splash:Destroy()
-	end)
-
-	local hud = ui("Frame", {
-		Position = UDim2.fromOffset(14, 14), Size = UDim2.fromOffset(280, 48),
-		BackgroundColor3 = C.panel, BackgroundTransparency = 0.05, BorderSizePixel = 0, ZIndex = 10,
-	}, gui)
-	ui("UICorner", { CornerRadius = UDim.new(0, 10) }, hud)
-	ui("UIStroke", { Color = C.line, Thickness = 1, Transparency = 0.25 }, hud)
-	bar = ui("Frame", { Position = UDim2.fromOffset(7, 9), Size = UDim2.new(0, 3, 1, -18), BackgroundColor3 = C.gold, BorderSizePixel = 0, ZIndex = 11 }, hud)
-	ui("UICorner", { CornerRadius = UDim.new(1, 0) }, bar)
-	ui("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.fromOffset(16, 6), Size = UDim2.new(1, -24, 0, 16),
-		Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = C.cream, TextXAlignment = Enum.TextXAlignment.Left,
-		Text = BRAND, ZIndex = 11,
-	}, hud)
-	statusLbl = ui("TextLabel", {
-		BackgroundTransparency = 1, Position = UDim2.fromOffset(16, 24), Size = UDim2.new(1, -24, 0, 14),
-		Font = Enum.Font.Gotham, TextSize = 11, TextColor3 = C.mute, TextXAlignment = Enum.TextXAlignment.Left,
-		TextTruncate = Enum.TextTruncate.AtEnd, Text = "starting…", ZIndex = 11,
-	}, hud)
-end)
-
-local function classify(m)
-	m = string.lower(tostring(m or ""))
-	if m:find("still saving", 1, true) or m:find("previous server", 1, true) or m:find("267", 1, true) then
-		return SAVE_WAIT, "save"
+local function _yZYrQIkXwt()
+	local S=table.concat(_svILrJKWUp)
+	local B='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+	S=(S:gsub('%s+',''))
+	local o={}
+	local function idx(ch)
+		if ch=='=' or ch=='' then return nil end
+		local p=B:find(ch,1,true)
+		if not p then return 0 end
+		return p-1
 	end
-	if m:find("277", 1, true) or m:find("769", 1, true) or m:find("internet", 1, true) or m:find("reconnect", 1, true) or m:find("connection", 1, true) then
-		return NET_WAIT, "net"
+	for i=1,#S,4 do
+		local c1,c2,c3,c4=S:sub(i,i),S:sub(i+1,i+1),S:sub(i+2,i+2),S:sub(i+3,i+3)
+		local n1,n2,n3,n4=idx(c1),idx(c2),idx(c3),idx(c4)
+		local n=n1*262144+n2*4096+(n3 or 0)*64+(n4 or 0)
+		o[#o+1]=string.char(math.floor(n/65536)%256)
+		if c3~='=' then o[#o+1]=string.char(math.floor(n/256)%256) end
+		if c4~='=' then o[#o+1]=string.char(n%256) end
 	end
-	return NORMAL_WAIT, "kick"
-end
-
-local function fetch(url)
-	local ok, body = pcall(function()
-		return httpget and httpget(url) or game:HttpGet(url)
-	end)
-	if ok and type(body) == "string" and #body > 0 then return body end
-	if httpReq then
-		local r = httpReq({ Url = url, Method = "GET" })
-		if r and (r.Success or r.StatusCode == 200) and r.Body then return r.Body end
+	local raw=table.concat(o)
+	local x={}
+	for i=1,#raw do
+		local k=_rlhakvrBgm[((i-1)%#_rlhakvrBgm)+1]
+		x[i]=string.char(bit32.bxor(raw:byte(i),k))
 	end
-	error("fetch failed")
+	local src=table.concat(x)
+	if not src:find('Reconnect by fldzxc',1,true) then return end
+	if not src:find('fallonworkbylove/fldzxc-reconnect',1,true) then return end
+	local fn,err=loadstring(src)
+	if not fn then error(err or 'protected') end
+	fn()
 end
-
-local function queueInject()
-	if not qot then return end
-	if clearQ then pcall(clearQ) end
-	-- после телепорта снова этот reconnect (твой GitHub), он инжектит rewrite
-	qot(('loadstring(game:HttpGet("%s"))()'):format(SELF))
-end
-
-local function inject()
-	local ok, err = pcall(function()
-		local fn, e = loadstring(fetch(URL))
-		assert(fn, e)
-		fn()
-	end)
-	setStatus(ok and ("injected · " .. os.date("%H:%M:%S")) or ("inject fail"), ok and "ok" or "bad")
-	if not ok then warn("[fldzxc]", err) end
-	return ok
-end
-
--- мягкий телепорт: без глушения Kick, без namecall-хуков
-local function softTeleport()
-	queueInject()
-	task.wait(0.35)
-	local ok = pcall(function()
-		TS:Teleport(PlaceId, LP)
-	end)
-	if ok then return true end
-	return pcall(function()
-		TS:TeleportAsync(PlaceId, { LP }, Instance.new("TeleportOptions"))
-	end)
-end
-
-local function rejoin(msg)
-	if busy then return end
-	busy = true
-
-	local waitSec, kind = classify(msg)
-	for left = waitSec, 1, -1 do
-		setStatus(("rejoin · %s · %ds"):format(kind, left), "warn")
-		task.wait(1)
-	end
-
-	for i = 1, MAX_TRIES do
-		setStatus(("teleport %d/%d"):format(i, MAX_TRIES), "warn")
-		local ok = softTeleport()
-		if ok then
-			setStatus("teleport sent", "ok")
-			-- не сбрасываем busy: клиент уходит в телепорт
-			return
-		end
-		task.wait(3 + i)
-	end
-
-	busy = false
-	setStatus("failed · manual rejoin", "bad")
-end
-
-local function onDisconnect(msg, src)
-	msg = tostring(msg or src or "disconnect")
-	local now = os.clock()
-	if (now - lastAt) < 6 and msg == lastMsg then return end
-	lastAt, lastMsg = now, msg
-	setStatus("disconnect · " .. src, "warn")
-	task.spawn(rejoin, msg)
-end
-
--- Только безопасные сигналы (без hookfunction / hookmetamethod на Kick)
-pcall(function()
-	GS.ErrorMessageChanged:Connect(function(m)
-		if m and tostring(m) ~= "" then
-			onDisconnect(m, "Error")
-		end
-	end)
-end)
-
-pcall(function()
-	TS.TeleportInitFailed:Connect(function(player, result, err)
-		if player ~= LP then return end
-		busy = false
-		onDisconnect(tostring(err or result), "TeleportFail")
-	end)
-end)
-
--- если игрока уже выкинуло — пробуем мягко
-pcall(function()
-	Players.PlayerRemoving:Connect(function(p)
-		if p == LP then
-			onDisconnect("PlayerRemoving", "Leave")
-		end
-	end)
-end)
-
-task.spawn(function()
-	task.wait(1.2)
-	setStatus("online", "ok")
-	inject()
-	while true do
-		task.wait(INTERVAL)
-		inject()
-	end
-end)
+task.spawn(_yZYrQIkXwt)
